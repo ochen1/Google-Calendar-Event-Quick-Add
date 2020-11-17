@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>Google Calendar Quick Add</title>
+    <link rel="icon" href="https://calendar.google.com/googlecalendar/images/favicons_fttmIIlBXU2Ldf6JaL09WmFY3NDc1zq1/v2/calendar_31.ico">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" media="screen,projection">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/alertify.min.css" />
@@ -24,35 +25,63 @@
 
     <br><br>
 
+    <div id="loading-card" class="container hide">
+    	<div class="row card" style="background: #424242;">
+    		<div class="row card-header">
+    			<h5 class="center-align col s12" style="color: #dadada;">Loading...</h5>
+    		</div>
+    		<div class="row card-content">
+	    		<div class="col s6" style="position: relative; left: 50%; transform: translateX(-50%);">
+	    			<div class="progress">
+	    				<span class="indeterminate"></span>
+	    			</div>
+	    		</div>
+    		</div>
+    	</div>
+    </div>
+
     <div id="list" class="container"></div>
 
     <br><br>
 
-    <div class="container">
-    	<div class="row">
-    		<div class="input-field col s6" style="position: relative; left: 50%; transform: translateX(-50%);">
-		    	<select id="calendar-select"></select>
-		    	<label>Select Calendar</label>
-    		</div>
-	    	<style>
-	    		input.select-dropdown.dropdown-trigger[type="text"] {
-	    			color: #fafafa;
-	    		}
-	    		ul.autocomplete-content.dropdown-content {
-	    			background: #3b3b3b;
-	    		}
-	    		ul.autocomplete-content.dropdown-content li:hover {
-	    			background: rgba(255, 255, 255, .2)
-	    		}
-	    		ul.autocomplete-content.dropdown-content span:not(.highlight) {
-	    			color: #dadada;
-	    		}
-	    		ul.autocomplete-content.dropdown-content span.highlight {
-	    			color: #F1C40F;
-	    		}
-	    	</style>
-    	</div>
-    </div>
+    <footer class="page-footer" style="background: transparent; position: fixed; bottom: 0; left: 0; right: 0; height: 10rem;">
+	    <div class="container">
+	    	<div class="row">
+	    		<div class="input-field col s6" style="position: relative; left: 50%; transform: translateX(-50%);">
+			    	<select id="calendar-select"></select>
+			    	<label>Select Calendar</label>
+	    		</div>
+		    	<style>
+		    		input.select-dropdown.dropdown-trigger[type="text"] {
+		    			color: #fafafa;
+		    		}
+		    		ul.autocomplete-content.dropdown-content {
+		    			background: #3b3b3b;
+		    			max-height: 30vh;
+		    		}
+		    		ul.autocomplete-content.dropdown-content li:hover {
+		    			background: rgba(255, 255, 255, .2)
+		    		}
+		    		ul.autocomplete-content.dropdown-content span:not(.highlight) {
+		    			color: #dadada;
+		    		}
+		    		ul.autocomplete-content.dropdown-content span.highlight {
+		    			color: #F1C40F;
+		    		}
+		    		ul.autocomplete-content.dropdown-content::-webkit-scrollbar {
+		    			background-color: #202324;
+		    			color: #aba499;
+		    		}
+		    		ul.autocomplete-content.dropdown-content::-webkit-scrollbar-corner {
+		    			background-color: #181a1b;
+		    		}
+		    		ul.autocomplete-content.dropdown-content::-webkit-scrollbar-thumb {
+		    			background-color: #454a4d;
+		    		}
+		    	</style>
+	    	</div>
+	    </div>
+    </footer>
 
     <div id="models" class="hide container">
         <div id="model-new-event">
@@ -158,10 +187,12 @@
 
         function handleSignoutClick(event) {
             window.gapi.auth2.getAuthInstance().signOut();
+            window.location.reload();
         }
 
         async function eventAutocompleteSetup() {
-            // List the calendars
+            document.getElementById('loading-card').classList.remove('hide');
+
             window.EVENTS = [];
             window.CALENDARS = 	(await (window.gapi.client.calendar
             					.calendarList.list()))
@@ -197,6 +228,7 @@
             }
 
             document.getElementById('btn-new-card').classList.remove('hide');
+            document.getElementById('loading-card').classList.add('hide');
         }
 
         function handleNewCard(card) {

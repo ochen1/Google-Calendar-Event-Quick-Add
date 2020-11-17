@@ -11,13 +11,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 
-<body>
+<body style="background: #212121;">
     <nav>
-        <div class="meta nav-wrapper" style="padding: 0 2ch;">
+        <div class="meta blue nav-wrapper" style="padding: 0 2ch;">
             <a href="#" class="brand-logo center">Google Calendar Event Quick Add</a>
             <ul class="right">
-                <li><button id="authorize_button" class="btn waves-effect waves-light hide">Authorize</button></li>
-                <li><button id="signout_button" class="btn waves-effect waves-light hide">Sign Out</button></li>
+                <li><button id="authorize_button" class="purple btn waves-effect waves-light hide">Authorize</button></li>
+                <li><button id="signout_button" class="purple btn waves-effect waves-light hide">Sign Out</button></li>
             </ul>
         </div>
     </nav>
@@ -26,18 +26,37 @@
 
     <div id="list" class="container"></div>
 
+    <br><br>
+
     <div class="container">
     	<div class="row">
     		<div class="input-field col s6" style="position: relative; left: 50%; transform: translateX(-50%);">
 		    	<select id="calendar-select"></select>
 		    	<label>Select Calendar</label>
     		</div>
+	    	<style>
+	    		input.select-dropdown.dropdown-trigger[type="text"] {
+	    			color: #fafafa;
+	    		}
+	    		ul.autocomplete-content.dropdown-content {
+	    			background: #3b3b3b;
+	    		}
+	    		ul.autocomplete-content.dropdown-content li:hover {
+	    			background: rgba(255, 255, 255, .2)
+	    		}
+	    		ul.autocomplete-content.dropdown-content span:not(.highlight) {
+	    			color: #dadada;
+	    		}
+	    		ul.autocomplete-content.dropdown-content span.highlight {
+	    			color: #F1C40F;
+	    		}
+	    	</style>
     	</div>
     </div>
 
     <div id="models" class="hide container">
         <div id="model-new-event">
-            <div class="new-event row card">
+            <div class="new-event row card" style="background-color: #303030;">
                 <form class="col s12 card-content" onsubmit="form_submit(this, event); return false;">
                     <div class="row">
                         <div class="input-field col s12">
@@ -61,6 +80,11 @@
                     </div>
                 </form>
             </div>
+            <style>
+            	form input, form textarea {
+            		color: #fafafa;
+            	}
+            </style>
         </div>
     </div>
 
@@ -278,32 +302,7 @@
         }
 
         async function post_form_submission(form) {
-        	let removeCard = await (new Promise((resolve) => {
-            	window.alertify.confirm(
-                    "Remove card?",
-                    "Permanently delete the card?",
-                    () => resolve(true),
-                    () => resolve(false)
-            	);
-            }) ? true : false);
-
-            if (removeCard) {
-            	form.parentElement.parentElement.removeChild(form.parentElement)
-            } else {
-                let resetCard = await (new Promise(resolve => {
-	                window.alertify.confirm(
-	                    "Reset card?",
-	                    "Permanently reset all the data in the card?",
-	                    () => resolve(true),
-	                    () => resolve(false)
-	                );
-                }));
-                if (resetCard) {
-                    form.querySelector('input[type="text"][name="name"]').value = '';
-                    form.querySelector('textarea[name="description"]').value = '';
-                    window.M.updateTextFields();
-                }
-            }
+            form.parentElement.parentElement.removeChild(form.parentElement);
         }
 
         function initCalendarDropdown() {

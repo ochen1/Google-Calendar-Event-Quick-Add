@@ -230,19 +230,17 @@
 
             let deltaMs = ended - started;
 
-            await (new Promise((resolve) => {
-                window.alertify.alert(
-                	'Congratulations!',
-                    `You worked for ${
-                    	window.humanizeDuration(deltaMs)
-                    }.<br>(${
-                    	started.toLocaleString()
-                    } - ${
-                    	ended.toLocaleString()
-                    })`,
-                    resolve
-                );
-            }));
+            window.alertify.notify(
+                `You worked for ${
+                	window.humanizeDuration(deltaMs)
+                }.<br>(${
+                	started.toLocaleString()
+                } - ${
+                	ended.toLocaleString()
+                })`,
+                'message',
+                6
+            );
 
             await (new Promise((resolve) => {
                 gapi.client.calendar.events.insert({
@@ -265,13 +263,11 @@
             }));
 
             console.log(event);
-            await (new Promise((resolve) => {
-            	window.alertify.alert(
-	                'Event created!',
-	                `You can find your event here: <a href="${event.htmlLink}">${event.htmlLink}</a>`,
-	                resolve
-            	);
-            }));
+        	window.alertify.notify(
+                'Event created!',
+                'success',
+                2
+        	);
 
             event.submitter.disabled = true;
             event.submitter.parentElement.querySelector('button[name="start"]').disabled = false;

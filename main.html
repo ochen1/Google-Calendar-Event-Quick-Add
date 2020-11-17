@@ -22,13 +22,23 @@
         </div>
     </nav>
 
-    <br>
+    <br><br>
 
     <div id="list" class="container"></div>
+
+    <div class="container">
+    	<div class="row">
+    		<div class="input-field col s6" style="position: relative; left: 50%; transform: translateX(-50%);">
+		    	<select id="calendar-select"></select>
+		    	<label>Select Calendar</label>
+    		</div>
+    	</div>
+    </div>
+
     <div id="models" class="hide container">
         <div id="model-new-event">
             <div class="new-event row card">
-                <form class="col s12 card-content" onsubmit="return form_submit(this, event);">
+                <form class="col s12 card-content" onsubmit="form_submit(this, event); return false;">
                     <div class="row">
                         <div class="input-field col s12">
                             <input name="name" type="text" placeholder="Event Name" autocomplete="off" required onkeypress="return event.keyCode != 13;" />
@@ -59,41 +69,50 @@
             <i class="material-icons">add</i>
         </button>
     </div>
-    
+
     <script type="text/javascript">
+    	"use strict";
+
         window.GAPIREADY = false;
         window.EVENTS = [];
         window.CALENDARS = null;
 
-        var CLIENT_ID = '74834239709-k9n0abtdl7d93o4ivtk3anhilqrc0tv3.apps.googleusercontent.com';
-        var API_KEY = 'AIzaSyCk5M7py1KjRFeEY4AEx-M5pE4zRpqw3JQ';
-        var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
-        var SCOPES = "https://www.googleapis.com/auth/calendar";
+        const	CLIENT_ID = '74834239709-k9n0abtdl7d93o4ivtk3anhilqrc0tv3.apps.googleusercontent.com',
+        		API_KEY = 'AIzaSyCk5M7py1KjRFeEY4AEx-M5pE4zRpqw3JQ',
+        		DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"],
+        		SCOPES = "https://www.googleapis.com/auth/calendar";
 
-        var authorizeButton = document.getElementById('authorize_button');
-        var signoutButton = document.getElementById('signout_button');
+        let authorizeButton = document.getElementById('authorize_button');
+        let signoutButton = document.getElementById('signout_button');
 
-        function handleClientLoad() {
-            gapi.load('client:auth2', initClient);
+        async function handleClientLoad() {
+            await (new Promise((resolve, reject) => {
+            	window.gapi.load(
+            		'client:auth2',
+            		{
+            			callback: resolve,
+            			onerror: reject
+            		}
+            	);
+            }));
+            await initClient();
         }
 
-        function initClient() {
-            gapi.client.init({
+        async function initClient() {
+            await window.gapi.client.init({
                 apiKey: API_KEY,
                 clientId: CLIENT_ID,
                 discoveryDocs: DISCOVERY_DOCS,
                 scope: SCOPES
-            }).then(function() {
-                // Listen for sign-in state changes.
-                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-
-                // Handle the initial sign-in state.
-                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-                authorizeButton.onclick = handleAuthClick;
-                signoutButton.onclick = handleSignoutClick;
-            }, function(error) {
-                console.error(JSON.stringify(error, null, 2));
             });
+
+            // Listen for sign-in state changes.
+            window.gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+
+            // Handle the initial sign-in state.
+            updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+            authorizeButton.onclick = handleAuthClick;
+            signoutButton.onclick = handleSignoutClick;
         }
 
         function updateSigninStatus(isSignedIn) {
@@ -110,146 +129,207 @@
         }
 
         function handleAuthClick(event) {
-            gapi.auth2.getAuthInstance().signIn();
+            window.gapi.auth2.getAuthInstance().signIn();
         }
 
         function handleSignoutClick(event) {
-            gapi.auth2.getAuthInstance().signOut();
+            window.gapi.auth2.getAuthInstance().signOut();
         }
 
-        function eventAutocompleteSetup() {
+        async function eventAutocompleteSetup() {
             // List the calendars
             window.EVENTS = [];
-            gapi.client.calendar.calendarList.list().then(function(response) {
-                window.CALENDARS = response.result.items.filter(function(calendar) {
-                    return calendar.accessRole == "owner";
-                });
+            window.CALENDARS = 	(await (window.gapi.client.calendar
+            					.calendarList.list()))
+        						.result.items
+        						.filter(
+        							(calendar) => calendar.accessRole == "owner"
+        						);
 
-                today = new Date();
-                past = new Date();
-                future = new Date();
-                past.setDate(today.getDate() - 7);
-                future.setDate(today.getDate() + 7);
+        	initCalendarDropdown();
 
-                for (calendar in window.CALENDARS) {
-                    gapi.client.calendar.events.list({
-                        'calendarId': window.CALENDARS[calendar].id,
-                        'timeMin': past.toISOString(),
-                        'timeMax': future.toISOString(),
-                        'showDeleted': false,
-                        'singleEvents': true,
-                        'orderBy': 'startTime'
-                    }).then(function(response) {
-                        var events = response.result.items;
-                        window.EVENTS = window.EVENTS.concat(
-                            events.map(function(event) {
-                                return [event.summary, event.description ? event.description : null];
-                            })
-                        );
-                        if (calendar == window.CALENDARS.length - 1) {
-                            document.getElementById('btn-new-card').classList.remove('hide');
-                        }
-                    });
-                }
-            });
+            let	today = new Date(),
+	            past = new Date(),
+	            future = new Date();
+
+            past.setDate(today.getDate() - 7);
+            future.setDate(today.getDate() + 7);
+
+            for (let calendar of window.CALENDARS) {
+                let calendarEvents = (await window.gapi.client.calendar.events.list({
+                    'calendarId': calendar.id,
+                    'timeMin': past.toISOString(),
+                    'timeMax': future.toISOString(),
+                    'showDeleted': false,
+                    'singleEvents': true,
+                    'orderBy': 'startTime'
+                })).result.items;
+
+                window.EVENTS = window.EVENTS.concat(
+                    calendarEvents.map(
+                    	(event) => [event.summary, event.description ? event.description : null]
+                	)
+                );
+            }
+
+            document.getElementById('btn-new-card').classList.remove('hide');
         }
 
         function handleNewCard(card) {
-            var input_name = card.querySelectorAll('input[type="text"][name="name"]');
-            M.Autocomplete.init(input_name, {
-                data: Object.fromEntries(window.EVENTS.map(function(event) {
-                    return [event[0], null];
-                })),
-                onAutocomplete: function(v) {
-                    for (var event of window.EVENTS) {
-                        if (event[0] == v && event[1] !== null) {
+            let input_name = card.querySelectorAll('input[type="text"][name="name"]');
+            window.M.Autocomplete.init(input_name, {
+                data: Object.fromEntries(
+                	window.EVENTS.map((event) => [event[0], null])
+                ),
+                onAutocomplete: (autocompleteValue) => {
+                    for (let event of window.EVENTS) {
+                        if (event[0] == autocompleteValue && event[1] !== null) {
                             for (var input_description of card.querySelectorAll('textarea[name="description"]')) {
                                 input_description.value = event[1];
-                                M.updateTextFields();
-                                M.textareaAutoResize(input_description);
+                                window.M.updateTextFields();
+                                window.M.textareaAutoResize(input_description);
                             }
                             break;
                         }
                     }
                 }
             });
-            for (var button of card.querySelectorAll('button[name="stop"]')) {
+            for (let button of card.querySelectorAll('button[name="stop"]')) {
                 button.disabled = true;
             }
         }
 
-        function form_submit(form, event) {
-            console.log(form, event);
-            action = event.submitter.getAttribute('name');
+        async function form_submit(form, event) {
+        	if (!window.GAPIREADY) {
+        		window.alertify.alert(
+        			"Please log in",
+        			"You must be logged in to create events!<br>You can log in with the authorize button."
+        		);
+        		return;
+        	}
+
+            let action = event.submitter.getAttribute('name');
             if (action == 'start') {
                 form.setAttribute('data-started-at', (new Date()).toISOString());
+
                 event.submitter.disabled = true;
                 event.submitter.parentElement.querySelector('button[name="stop"]').disabled = false;
             } else if (action == 'stop') {
-                console.log(form.getAttribute('data-started-at'), (new Date().toISOString()));
-                started = new Date(0);
-                ended = new Date();
-                started.setTime(Date.parse(form.getAttribute('data-started-at')));
-                milliseconds = ended - started;
-                alertify.alert('Congratulations!',
-                    `You worked for ${humanizeDuration(milliseconds)}.<br>(${started.toLocaleString()} - ${ended.toLocaleString()})`,
-                    function() {
-                        var request = gapi.client.calendar.events.insert({
-                            'calendarId': 'primary',
-                            'resource': {
-                                'summary': form.querySelector('input[type="text"][name="name"]').value,
-                                'description': form.querySelector('textarea[name="description"]').value,
-                                'start': {
-                                    'dateTime': started.toISOString(),
-                                    'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
-                                },
-                                'end': {
-                                    'dateTime': ended.toISOString(),
-                                    'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
-                                }
-                            }
-                        });
-
-                        request.execute(function(event) {
-                            console.log(event);
-                            alertify.alert(
-                                'Event created!',
-                                `You can find your event here: <a href="${event.htmlLink}">${event.htmlLink}</a>`,
-                                function() {
-                                    this.event.submitter.disabled = true;
-                                    this.event.submitter.parentElement.querySelector('button[name="start"]').disabled = false;
-                                    setTimeout(function() {
-                                        alertify.confirm(
-                                            "Remove card?",
-                                            "Permanently delete the card?",
-                                            function() {
-                                                this.form.parentElement.parentElement.removeChild(this.form.parentElement);
-                                            }.bind(this),
-                                            function() {
-                                                alertify.confirm(
-                                                    "Reset card?",
-                                                    "Permanently reset all the data in the card?",
-                                                    function() {
-                                                        this.form.querySelector('input[type="text"][name="name"]').value = '';
-                                                        this.form.querySelector('textarea[name="description"]').value = '';
-                                                        M.updateTextFields();
-                                                    }.bind(this)
-                                                );
-                                            }.bind(this)
-                                        );
-                                    }.bind(this), 3000);
-                                }.bind(this)
-                            );
-                        }.bind(this));
-                    }.bind({
-                        form: form,
-                        event: event
-                    })
-                );
+                createEvent(form, event);
             } else {
                 throw Exception("Action name " + action + " cannot be handled.");
             }
             return false;
+        }
+
+        async function createEvent(form, event) {
+            let	started = new Date(0),
+            	ended = new Date();
+
+            started.setTime(Date.parse(form.getAttribute('data-started-at')));
+
+            let deltaMs = ended - started;
+
+            await (new Promise((resolve) => {
+                window.alertify.alert(
+                	'Congratulations!',
+                    `You worked for ${
+                    	window.humanizeDuration(deltaMs)
+                    }.<br>(${
+                    	started.toLocaleString()
+                    } - ${
+                    	ended.toLocaleString()
+                    })`,
+                    resolve
+                );
+            }));
+
+            await (new Promise((resolve) => {
+                gapi.client.calendar.events.insert({
+                    'calendarId': document.querySelector('select#calendar-select').value,
+                    'resource': {
+                        'summary': form.querySelector('input[type="text"][name="name"]').value,
+                        'description': form.querySelector('textarea[name="description"]').value,
+                        'start': {
+                            'dateTime': started.toISOString(),
+                            'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+                        },
+                        'end': {
+                            'dateTime': ended.toISOString(),
+                            'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+                        }
+                    }
+                })
+
+                .execute(resolve);
+            }));
+
+            console.log(event);
+            await (new Promise((resolve) => {
+            	window.alertify.alert(
+	                'Event created!',
+	                `You can find your event here: <a href="${event.htmlLink}">${event.htmlLink}</a>`,
+	                resolve
+            	);
+            }));
+
+            event.submitter.disabled = true;
+            event.submitter.parentElement.querySelector('button[name="start"]').disabled = false;
+
+            await (new Promise((resolve) => setTimeout(resolve, 1000)));
+
+            await post_form_submission(form);
+        }
+
+        async function post_form_submission(form) {
+        	let removeCard = await (new Promise((resolve) => {
+            	window.alertify.confirm(
+                    "Remove card?",
+                    "Permanently delete the card?",
+                    () => resolve(true),
+                    () => resolve(false)
+            	);
+            }) ? true : false);
+
+            if (removeCard) {
+            	form.parentElement.parentElement.removeChild(form.parentElement)
+            } else {
+                let resetCard = await (new Promise(resolve => {
+	                window.alertify.confirm(
+	                    "Reset card?",
+	                    "Permanently reset all the data in the card?",
+	                    () => resolve(true),
+	                    () => resolve(false)
+	                );
+                }));
+                if (resetCard) {
+                    form.querySelector('input[type="text"][name="name"]').value = '';
+                    form.querySelector('textarea[name="description"]').value = '';
+                    window.M.updateTextFields();
+                }
+            }
+        }
+
+        function initCalendarDropdown() {
+        	let select = document.getElementById('calendar-select');
+        	select.querySelectorAll('*').forEach((option) => select.removeChild(option));
+        	for (let calendar of window.CALENDARS) {
+        		let	option = document.createElement('option');
+        		option.append(document.createTextNode(calendar.summary));
+        		option.setAttribute('value', calendar.id);
+        		option.style.background	= calendar.backgroundColor;
+        		option.style.color 		= calendar.foregroundColor;
+        		select.appendChild(option);
+        	}
+
+
+        	window.M.FormSelect.init(document.querySelectorAll('#calendar-select'), {
+        		dropdownOptions: {
+	        		alignment: 'center',
+	        		container: select.parentNode,
+	        		coverTrigger: false
+        		}
+        	});
         }
     </script>
     <script async defer src="https://apis.google.com/js/api.js" onload="this.onload=function(){};handleClientLoad()" onreadystatechange="if (this.readyState === 'complete') this.onload()"></script>

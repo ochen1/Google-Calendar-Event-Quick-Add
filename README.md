@@ -4,4 +4,4 @@ This project lets you easily create new events without having to specify a time,
 
 Showcased below is a demo:
 
-[Demo GIF](/imgs/demo.gif)
+![Demo GIF](/imgs/demo.gif)

@@ -89,18 +89,18 @@
                 <form class="col s12 card-content" onsubmit="form_submit(this, event); return false;">
                     <div class="row">
                         <div class="input-field col s12">
-                            <input name="name" type="text" placeholder="Event Name" autocomplete="off" required onkeypress="return event.keyCode != 13;" />
+                            <input tabindex="1" name="name" type="text" placeholder="Event Name" autocomplete="off" required onkeypress="return event.keyCode != 13;" />
                         </div>
                     </div>
                     <div class="row">
                         <div class="input-field col s12">
-                            <textarea name="description" class="materialize-textarea"></textarea>
+                            <textarea tabindex="2" name="description" class="materialize-textarea"></textarea>
                             <label>Description</label>
                         </div>
                     </div>
                     <div class="row btn-container" style="display: flex; align-items: center; padding: .4em 2ch; gap: 2%;">
-                        <button class="btn-large waves-effect waves-light blue" name="start" type="submit">Start</button>
-                        <button class="btn-large waves-effect waves-light red" name="stop" type="submit">Stop</button>
+                        <button tabindex="3" class="btn-large waves-effect waves-light blue" name="start" type="submit">Start</button>
+                        <button tabindex="3" class="btn-large waves-effect waves-light red" name="stop" type="submit">Stop</button>
                         <!-- TODO: Stop & Delete -->
                         <span style="flex-grow: 1;"></span>
                         <button class="btn-floating btn-medium waves-effect waves-light pink" onclick="document.getElementById('list').removeChild(this.parentElement.parentElement.parentElement)">
